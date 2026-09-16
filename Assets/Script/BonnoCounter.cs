@@ -13,8 +13,14 @@ public class BonnoCounter : MonoBehaviour
         // クリアした後は減らさない
         if (IsClear) return;
 
+        // 指定された数だけ煩悩を減らす
+        RemainingCount -= amount;
+
         // 残り煩悩がマイナスにならないようにする
-        RemainingCount = Mathf.Max(0, RemainingCount - amount);
+        if (RemainingCount <= 0)
+        {
+            RemainingCount = 0;
+        }
 
         Debug.Log($"威力：{amount} ／ 残り煩悩：{RemainingCount}");
 

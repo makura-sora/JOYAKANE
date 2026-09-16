@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody), typeof(BoxCollider))]
-public class BellReaction : MonoBehaviour
+public class Bell : MonoBehaviour
 {
     [Header("’Æ‚Ì“–‚½‚è”»’è")]
     [SerializeField] private Collider Hammer;
