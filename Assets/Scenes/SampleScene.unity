@@ -119,6 +119,60 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &68215212
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 68215214}
+  - component: {fileID: 68215213}
+  m_Layer: 0
+  m_Name: ArmMouseEdit
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &68215213
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 68215212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93e44b125c351b24687b61ab46c017fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArmMouseEdit
+  PlayArm: {fileID: 1314738977}
+  GameCamera: {fileID: 519420031}
+  CraneRoot: {fileID: 1270217613}
+  Arm1: {fileID: 1251617296}
+  Arm2: {fileID: 243469715}
+  Arm1Visual: {fileID: 793699305}
+  Arm2Visual: {fileID: 1749632887}
+  Hammer: {fileID: 83975458}
+  GrabRadius: 35
+  CranePivot: {fileID: 216756218}
+--- !u!4 &68215214
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 68215212}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.77074, y: 1.46577, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &83975455
 GameObject:
   m_ObjectHideFlags: 0
@@ -232,6 +286,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.0000004, y: 1.0000001, z: 0.2}
   m_Center: {x: -0.0000009536743, y: 0.00000011920929, z: 0}
+--- !u!1 &216756217
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 216756218}
+  m_Layer: 0
+  m_Name: CranePivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &216756218
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 216756217}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 7.1, y: -3.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &243469713
 GameObject:
   m_ObjectHideFlags: 0
@@ -1300,6 +1385,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 431607f4c541633408e49caabce80acd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayArm
+  CraneRoot: {fileID: 1270217613}
+  Arm1: {fileID: 1251617296}
+  Arm2: {fileID: 243469715}
 --- !u!4 &1314738978
 Transform:
   m_ObjectHideFlags: 0
@@ -1782,3 +1870,5 @@ SceneRoots:
   - {fileID: 1314738978}
   - {fileID: 1879973180}
   - {fileID: 2134826514}
+  - {fileID: 68215214}
+  - {fileID: 216756218}
