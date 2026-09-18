@@ -7,6 +7,13 @@ public class PlayArm : MonoBehaviour
     [SerializeField] private ArticulationBody Arm1;
     [SerializeField] private ArticulationBody Arm2;
 
+    [Header("停止時にリセットするもの")]
+    [SerializeField] private BonnoCounter BonnoCounter;
+    [SerializeField] private Bell Bell;
+
+    [Header("制限時間")]
+    [SerializeField] private GameTimer GameTimer;
+
     public bool IsPlaying { get; private set; }
 
     // 再生してから何回、物理更新が行われたか
@@ -60,6 +67,19 @@ public class PlayArm : MonoBehaviour
         SavedArm2Position = Arm2.transform.localPosition;
         SavedArm2Rotation = Arm2.transform.localRotation;
 
+        // 物理が無効なうちに、編集後の配置に接続設定を合わせる
+        AlignJoint(Arm1, CraneRoot);
+        AlignJoint(Arm2, Arm1);
+
+        // ここからは既存の処理
+        CraneRoot.enabled = true;
+        Arm1.enabled = true;
+        Arm2.enabled = true;
+
+        // 今の配置を基準の0度にしたので、物理側の角度もそろえる
+        Arm1.jointPosition = new ArticulationReducedSpace(0f);
+        Arm2.jointPosition = new ArticulationReducedSpace(0f);
+
         // 支点 → Arm1 → Arm2の順に物理を有効にする
         // 1回目も2回目も、ここから開始する
         CraneRoot.enabled = true;
@@ -76,12 +96,6 @@ public class PlayArm : MonoBehaviour
         CraneRoot.WakeUp();
         Arm1.WakeUp();
         Arm2.WakeUp();
-
-        // 時間を動かす直前の状態を記録する
-        PrintArmState("再生開始：CraneRoot", CraneRoot);
-        PrintArmState("再生開始：Arm1", Arm1);
-        PrintArmState("再生開始：Arm2", Arm2);
-
         IsPlaying = true;
         Time.timeScale = 1f;
     }
@@ -103,7 +117,15 @@ public class PlayArm : MonoBehaviour
         Arm2.transform.localPosition = SavedArm2Position;
         Arm2.transform.localRotation = SavedArm2Rotation;
 
-        // 編集中は物理を無効にしたままにする
+
+        // 煩悩と鐘を戻す
+        BonnoCounter.ResetCount();
+        Bell.ResetBell();
+
+        // 残り時間も戻す
+        GameTimer.ResetTimer();
+
+        // 編集状態に戻る
         IsPlaying = false;
     }
 
@@ -121,46 +143,25 @@ public class PlayArm : MonoBehaviour
         Time.timeScale = 1f;
     }
 
-
-    // 再生開始時の物理状態をConsoleへ出す
-    private void PrintArmState(string label, ArticulationBody body)
+    // 編集した配置を、関節の基準となる姿勢にする
+    private void AlignJoint(
+        ArticulationBody child,
+        ArticulationBody parent)
     {
-        Debug.Log(
-            $"{label}\n" +
-            $"位置：{body.transform.position.ToString("F4")}\n" +
-            $"角度：{body.transform.eulerAngles.ToString("F4")}\n" +
-            $"質量：{body.mass}\n" +
-            $"重心：{body.centerOfMass.ToString("F4")}\n" +
-            $"慣性：{body.inertiaTensor.ToString("F4")}\n" +
-            $"慣性の向き：{body.inertiaTensorRotation.eulerAngles.ToString("F4")}\n" +
-            $"移動減衰：{body.linearDamping}\n" +
-            $"回転減衰：{body.angularDamping}\n" +
-            $"関節摩擦：{body.jointFriction}\n" +
-            $"親側の接続位置：{body.parentAnchorPosition.ToString("F4")}\n" +
-            $"親側の接続角度：{body.parentAnchorRotation.eulerAngles.ToString("F4")}\n" +
-            $"Driveの減衰：{body.xDrive.damping}",
-            body
-        );
-    }
+        // 子側の接続位置・向きを、ワールド座標で取得する
+        Vector3 worldPosition =
+            child.transform.TransformPoint(child.anchorPosition);
 
-    private void FixedUpdate()
-    {
-        if (!IsPlaying) return;
+        Quaternion worldRotation =
+            child.transform.rotation * child.anchorRotation;
 
-        PhysicsStep++;
+        // 親側の接続位置・向きを、子側にそろえる
+        child.matchAnchors = false;
 
-        // 最初の更新と、その後100更新ごとに記録する
-        // 通常設定なら約2秒間隔。最初の約20秒間だけ記録する
-        if (PhysicsStep > 1001) return;
-        if ((PhysicsStep - 1) % 100 != 0) return;
+        child.parentAnchorPosition =
+            parent.transform.InverseTransformPoint(worldPosition);
 
-        Debug.Log(
-            $"物理更新：{PhysicsStep}回目\n" +
-            $"Arm1 関節角度：{Arm1.jointPosition[0]:F4}" +
-            $" ／ 回転速度：{Arm1.jointVelocity[0]:F4}\n" +
-            $"Arm2 関節角度：{Arm2.jointPosition[0]:F4}" +
-            $" ／ 回転速度：{Arm2.jointVelocity[0]:F4}\n" +
-            $"休止状態：{CraneRoot.IsSleeping()}"
-        );
+        child.parentAnchorRotation =
+            Quaternion.Inverse(parent.transform.rotation) * worldRotation;
     }
 }

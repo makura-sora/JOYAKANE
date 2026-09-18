@@ -22,8 +22,15 @@ public class ArmMouseEdit : MonoBehaviour
     [Header("クレーンの回転中心")]
     [SerializeField] private Transform CranePivot;
 
+    [Header("クレーンの回転範囲")]
+    [SerializeField] private float MinCraneAngle = -45f;
+    [SerializeField] private float MaxCraneAngle = 45f;
+
+    // 起動時の角度を0度として、現在どれだけ回したか
+    private float CurrentCraneAngle = 0f;
+
     // 何をつかんでいるか
-    private enum DragTarget { None, Root, Elbow, Hammer }
+    private enum DragTarget { None, Elbow, Hammer }
     private DragTarget Target;
 
     // クリックした瞬間にパーツが飛ばないよう、マウスとのずれを保存する
@@ -85,19 +92,18 @@ public class ArmMouseEdit : MonoBehaviour
 
             // 一番近い操作点を選ぶ
             float nearest = GrabRadius;
-            PickTarget(GetPivot(Arm1), DragTarget.Root,
-                screenPosition, ref nearest);
             PickTarget(GetPivot(Arm2), DragTarget.Elbow,
                 screenPosition, ref nearest);
             PickTarget(Hammer.position, DragTarget.Hammer,
                 screenPosition, ref nearest);
 
-            // 木槌をつかんだときは、白い棒の先端を操作する
-            Vector3 point = Target == DragTarget.Root
-                ? GetPivot(Arm1)
-                : Target == DragTarget.Elbow
-                    ? GetPivot(Arm2)
-                    : GetTip();
+            // 何もつかめなかった場合は終了
+            if (Target == DragTarget.None) return;
+
+            // 選んだ操作点と、マウスとのずれを保存する
+            Vector3 point = Target == DragTarget.Elbow
+                ? GetPivot(Arm2)
+                : GetTip();
 
             GrabOffset = point - mousePosition;
         }
@@ -106,46 +112,15 @@ public class ArmMouseEdit : MonoBehaviour
 
         switch (Target)
         {
-            case DragTarget.Root:
-                {
-                    // クレーンの根元。ここは動かさない
-                    Vector3 pivot = CranePivot.position;
-
-                    // 根元から現在の先端へ向かう方向
-                    Vector3 currentDirection = GetPivot(Arm1) - pivot;
-
-                    // 根元からマウスへ向かう方向
-                    Vector3 targetDirection = destination - pivot;
-
-                    // 画面の奥行きは計算に含めない
-                    currentDirection.z = 0f;
-                    targetDirection.z = 0f;
-
-                    // マウスが根元と重なった場合は回さない
-                    if (currentDirection.sqrMagnitude < 0.000001f ||
-                        targetDirection.sqrMagnitude < 0.000001f)
-                        break;
-
-                    // マウスの方向まで、何度回せばよいか
-                    float angle = Vector3.SignedAngle(
-                        currentDirection,
-                        targetDirection,
-                        Vector3.forward);
-
-                    // 根元を中心にクレーン全体を回す
-                    CraneRoot.transform.RotateAround(
-                        pivot, Vector3.forward, angle);
-
-                    break;
-                }
-
             case DragTarget.Elbow:
-                ChangeArm(Arm1, Arm1Visual, GetPivot(Arm2),
+                ChangeArm(
+                    Arm1, Arm1Visual, GetPivot(Arm2),
                     destination, true);
                 break;
 
             case DragTarget.Hammer:
-                ChangeArm(Arm2, Arm2Visual, GetTip(),
+                ChangeArm(
+                    Arm2, Arm2Visual, GetTip(),
                     destination, false);
                 break;
         }
@@ -247,4 +222,31 @@ public class ArmMouseEdit : MonoBehaviour
         body.parentAnchorPosition = position;
         body.parentAnchorRotation = rotation;
     }
+
+    // 矢印ボタンから呼ぶ
+    // angleは「今回、何度回転させるか」
+    public void RotateCrane(float angle)
+    {
+        if (PlayArm.IsPlaying) return;
+
+        // 回転後の角度を、指定した範囲内に収める
+        float nextAngle = Mathf.Clamp(
+            CurrentCraneAngle + angle,
+            MinCraneAngle,
+            MaxCraneAngle);
+
+        // 実際に回してよい角度だけ求める
+        // 限界に達していれば0になる
+        float moveAngle = nextAngle - CurrentCraneAngle;
+
+        CraneRoot.transform.RotateAround(
+            CranePivot.position,
+            Vector3.forward,
+            moveAngle);
+
+        // 現在の角度を更新する
+        CurrentCraneAngle = nextAngle;
+    }
 }
+
+

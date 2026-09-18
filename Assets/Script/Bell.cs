@@ -138,4 +138,19 @@ public class Bell : MonoBehaviour
         // 元の角度に傾きを加える
         Rb.MoveRotation(StartRotation * tiltRotation);
     }
+
+    // 鐘の位置と、揺れている勢いをリセットする
+    public void ResetBell()
+    {
+        // 前回の揺れを次の再生へ持ち越さない
+        Offset = Vector3.zero;
+        Velocity = Vector3.zero;
+
+        // 物理側の位置・角度を最初の状態に戻す
+        Rb.position = StartPosition;
+        Rb.rotation = StartRotation;
+
+        // 時間が止まっていても、その場で見た目を戻す
+        transform.SetPositionAndRotation(StartPosition, StartRotation);
+    }
 }
