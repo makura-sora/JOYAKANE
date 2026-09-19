@@ -34,7 +34,7 @@ public class BonnoCounter : MonoBehaviour
     private int BenefitCount;
 
     // ”Ï”Y‚ğ‚·‚×‚ÄÁ‚µ‚½‚©
-    private bool IsClear;
+    public bool IsClear { get; private set; }
 
     // Ô‚¢•”•ª‚ğ•\¦‚µ‚Ä‚¨‚­c‚èŠÔ
     private float DamageTimer;

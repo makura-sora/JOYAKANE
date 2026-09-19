@@ -15,6 +15,16 @@ public class Bell : MonoBehaviour
     [SerializeField] private BonnoCounter BonnoCounter;
     [SerializeField] private float ScoreMultiplier = 0.5f; // 得点の倍率
 
+    [Header("打撃の演出")]
+    [SerializeField] private BellEffect BellEffect;
+
+    [Header("鐘の音")]
+    [SerializeField] private AudioSource BellAudio;
+    [SerializeField] private AudioClip BellSound;
+
+    [Header("制限時間")]
+    [SerializeField] private GameTimer GameTimer;
+
     private Rigidbody Rb;
     private ArticulationBody HammerBody;
 
@@ -70,6 +80,23 @@ public class Bell : MonoBehaviour
         // 速い打撃ほど多く減らす
         int power = Mathf.Max(1, Mathf.RoundToInt(hitSpeed * ScoreMultiplier));
 
+        // 再生中で、まだ時間切れでなければ鳴らす
+        if (GameTimer.CanScore)
+        {
+            BellAudio.PlayOneShot(BellSound);
+        }
+
+        // 打撃前の状態で、煩悩かご利益かを決める。
+        // 煩悩を0にする一撃は「○○煩悩」として表示する
+        // 鐘の中心から、上に1ワールド単位ずらした位置
+        Vector3 textPosition = Rb.worldCenterOfMass + Vector3.up * 2f;
+
+        BellEffect.Show(
+            power,
+            BonnoCounter.IsClear,
+            textPosition);
+
+        // 煩悩・ご利益の数字を更新する
         BonnoCounter.Reduce(power);
 
         // ---------- 鐘を動かす ----------
@@ -152,5 +179,8 @@ public class Bell : MonoBehaviour
 
         // 時間が止まっていても、その場で見た目を戻す
         transform.SetPositionAndRotation(StartPosition, StartRotation);
+
+        // 編集に戻ったら、鐘の余韻も止める
+        BellAudio.Stop();
     }
 }
