@@ -18,6 +18,16 @@ public class BellEffect : MonoBehaviour
     // この威力以上で、揺れが最大になる
     [SerializeField] private float MaxShakePower = 30f;
 
+    [Header("ご利益タイム開始時の揺れ")]
+    [SerializeField] private float BonusShakeTime = 1.2f;
+    [SerializeField] private float BonusShakeDistance = 0.6f;
+
+    // 今回の揺れの全体時間
+    private float CurrentShakeTime;
+
+    // ご利益タイム用の強い揺れを再生中か
+    private bool IsBonusShake;
+
     private Vector3 StartCameraPosition;
 
     private float ShakeTimer;
@@ -52,55 +62,101 @@ public class BellEffect : MonoBehaviour
         float ratio = Mathf.Clamp01(
             power / Mathf.Max(1f, MaxShakePower));
 
-        // 強い打撃ほど、大きく揺らす
-        ShakeStrength = MaxShakeDistance * ratio;
-        ShakeTimer = ShakeTime;
+        // ご利益タイム用の揺れを、普通の打撃で上書きしない
+        if (!IsBonusShake)
+        {
+            ShakeStrength = MaxShakeDistance * ratio;
+            CurrentShakeTime = Mathf.Max(0.01f, ShakeTime);
+            ShakeTimer = CurrentShakeTime;
+        }
     }
 
     private void LateUpdate()
     {
-        // 編集に戻ったら、揺れを終える
+        if (GameCamera == null) return;
+
+        // 編集に戻った場合は、揺れだけ終了する。
+        // 編集中なので、時間は止めたままにする
         if (!PlayArm.IsPlaying)
         {
             ShakeTimer = 0f;
+            IsBonusShake = false;
+
+            GameCamera.transform.localPosition = StartCameraPosition;
+            return;
         }
 
         if (ShakeTimer <= 0f)
         {
-            GameCamera.transform.localPosition =
-                StartCameraPosition;
-
+            GameCamera.transform.localPosition = StartCameraPosition;
             return;
         }
 
-        ShakeTimer = Mathf.Max(
-            0f, ShakeTimer - Time.deltaTime);
+        // ご利益タイムの揺れは、時間停止の影響を受けない時間で進める
+        // 通常の打撃は、今までどおりゲーム内の時間を使う
+        float deltaTime = IsBonusShake
+            ? Time.unscaledDeltaTime
+            : Time.deltaTime;
 
-        // 時間が経つほど、揺れを小さくする
+        ShakeTimer = Mathf.Max(0f, ShakeTimer - deltaTime);
+
+        // 終わりに近づくほど揺れを弱める
         float remainingRatio =
-            ShakeTimer / Mathf.Max(0.01f, ShakeTime);
+            ShakeTimer / Mathf.Max(0.01f, CurrentShakeTime);
 
-        // ランダムな方向へ、少しだけカメラをずらす
         Vector2 offset =
             Random.insideUnitCircle *
             ShakeStrength *
             remainingRatio;
 
-        // 元の位置を基準にするので、カメラが流れていかない
         GameCamera.transform.localPosition =
             StartCameraPosition +
             new Vector3(offset.x, offset.y, 0f);
-    }
 
+        if (ShakeTimer <= 0f)
+        {
+            // カメラを元の位置へ戻す
+            GameCamera.transform.localPosition = StartCameraPosition;
+
+            if (IsBonusShake)
+            {
+                IsBonusShake = false;
+
+                // ご利益タイムの揺れが終わったので、ゲームを再開する
+                Time.timeScale = 1f;
+            }
+        }
+    }
     private void OnDisable()
     {
+        // ご利益タイムの演出中に無効になった場合は、時間を戻す。
+        // ただし、編集に戻っているなら停止したままにする
+        if (IsBonusShake && PlayArm != null && PlayArm.IsPlaying)
+        {
+            Time.timeScale = 1f;
+        }
+
         // 揺れの残り時間を消す
         ShakeTimer = 0f;
+        IsBonusShake = false;
 
         // 再生終了時など、カメラが先に破棄されていたら何もしない
         if (GameCamera == null) return;
 
         // カメラが残っている場合だけ、元の位置へ戻す
         GameCamera.transform.localPosition = StartCameraPosition;
+    }
+
+    // ご利益タイムへ入った瞬間に呼ぶ
+    public void PlayBonusShake()
+    {
+        IsBonusShake = true;
+
+        ShakeStrength = BonusShakeDistance;
+        CurrentShakeTime = Mathf.Max(0.01f, BonusShakeTime);
+        ShakeTimer = CurrentShakeTime;
+
+        // アームの物理計算と、制限時間のカウントを止める
+        Time.timeScale = 0f;
     }
 }

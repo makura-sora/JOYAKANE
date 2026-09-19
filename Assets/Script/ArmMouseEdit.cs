@@ -26,6 +26,9 @@ public class ArmMouseEdit : MonoBehaviour
     [SerializeField] private float MinCraneAngle = -45f;
     [SerializeField] private float MaxCraneAngle = 45f;
 
+    [Header("木槌につながる棒の先端")]
+    [SerializeField] private Transform Arm2Tip;
+
     // 起動時の角度を0度として、現在どれだけ回したか
     private float CurrentCraneAngle = 0f;
 
@@ -36,9 +39,6 @@ public class ArmMouseEdit : MonoBehaviour
     // クリックした瞬間にパーツが飛ばないよう、マウスとのずれを保存する
     private Vector3 GrabOffset;
 
-    // Arm2の白い棒が、ローカルXのどちら側へ伸びているか
-    private float TipSign;
-
     private void Start()
     {
         // 木槌を、伸縮する白い棒の子から外す
@@ -47,11 +47,6 @@ public class ArmMouseEdit : MonoBehaviour
 
         FixParentAnchor(Arm1);
         FixParentAnchor(Arm2);
-
-        Vector3 toCenter =
-            Arm2Visual.position - GetPivot(Arm2);
-
-        TipSign = Vector3.Dot(Arm2Visual.right, toCenter) >= 0f ? 1f : -1f;
     }
 
     private void Update()
@@ -192,9 +187,7 @@ public class ArmMouseEdit : MonoBehaviour
 
     private Vector3 GetTip()
     {
-        // プロジェクト内のSquareは、横幅1の画像をScaleで伸ばしている
-        return Arm2Visual.TransformPoint(
-            new Vector3(TipSign * 0.5f, 0f, 0f));
+        return Arm2Tip.position;
     }
 
     private void PickTarget(

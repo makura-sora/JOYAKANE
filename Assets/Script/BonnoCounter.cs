@@ -27,6 +27,18 @@ public class BonnoCounter : MonoBehaviour
     [SerializeField] private TMP_Text GameOverTitleText;
     [SerializeField] private TMP_Text GameOverScoreText;
 
+    [Header("背景の切り替え")]
+    [SerializeField] private BackgroundChange BackgroundChange;
+
+    [Header("ご利益タイムの文字演出")]
+    [SerializeField] private BonusText BonusText;
+
+    [Header("ご利益タイム開始時の画面揺れ")]
+    [SerializeField] private BellEffect BellEffect;
+
+    [Header("ご利益タイムのBGM")]
+    [SerializeField] private AudioSource BonusBGM;
+
     // 編集に戻ったときに復元する、最初の煩悩の数
     private int StartCount;
 
@@ -100,7 +112,19 @@ public class BonnoCounter : MonoBehaviour
                 // 次の打撃からは、ご利益を加算する
                 IsClear = true;
 
-                // ご利益タイムに入った瞬間、一度だけ時間を追加する
+                // ご利益タイムに入った瞬間、BGMを最初から流す
+                BonusBGM.Play();
+
+                // 背景を切り替える
+                BackgroundChange.ShowBenefit();
+
+                // 「スーパーご利益タイム」を右から表示する
+                BonusText.Show();
+
+                // 通常の打撃より、大きく長く揺らす
+                BellEffect.PlayBonusShake();
+
+                // 残り時間を追加する
                 GameTimer.AddTime(BonusTime);
 
                 Debug.Log("スーパーご利益タイム！");
@@ -142,6 +166,9 @@ public class BonnoCounter : MonoBehaviour
     // 時間切れになったとき、GameTimerから呼ばれる
     public void ShowResult()
     {
+        // 結果画面では、ゲージ上の文字を隠す
+        BonnoText.enabled = false;
+
         // 成功した場合だけ、クリア用の文字を表示する
         ClearTitleText.enabled = IsClear;
         ClearScoreText.enabled = IsClear;
@@ -161,6 +188,9 @@ public class BonnoCounter : MonoBehaviour
         }
         else
         {
+            // 煩悩が残っていた場合は、灰色の背景にする
+            BackgroundChange.ShowTimeUp();
+
             GameOverTitleText.color = Color.red;
             GameOverScoreText.color = Color.red;
 
@@ -173,6 +203,10 @@ public class BonnoCounter : MonoBehaviour
     // 編集に戻ったとき、PlayArmから呼ばれる
     public void ResetCount()
     {
+
+        // 編集へ戻ったら、ゲージ上の文字を再表示する
+        BonnoText.enabled = true;
+
         // 煩悩・ご利益・クリア状態を戻す
         RemainingCount = StartCount;
         BenefitCount = 0;
@@ -191,5 +225,13 @@ public class BonnoCounter : MonoBehaviour
         ClearScoreText.enabled = false;
         GameOverTitleText.enabled = false;
         GameOverScoreText.enabled = false;
+        // 編集に戻ったら、通常背景へ戻す
+        BackgroundChange.ShowNormal();
+        // 演出の途中で停止しても、文字を消す
+        BonusText.ResetEffect();
+
+        // 編集へ戻ったらBGMを止める
+        // 次に再生するときは曲の最初から始まる
+        BonusBGM.Stop();
     }
 }
